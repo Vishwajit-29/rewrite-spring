@@ -296,6 +296,159 @@ class MigrateToModularStartersTest implements RewriteTest {
         }
     }
 
+    @Nested
+    class WebClientStarter {
+
+        @Test
+        void addWebClientStarterIfWebClientIsUsed() {
+            rewriteRun(
+              mavenProject("project",
+                //language=xml
+                pomXml(
+                  """
+                    <project>
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>org.example</groupId>
+                        <artifactId>example</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                        <dependencies>
+                        </dependencies>
+                    </project>
+                    """,
+                  spec -> spec.after(pom -> assertThat(pom)
+                    .contains("<artifactId>spring-boot-starter-webclient</artifactId>")
+                    .containsPattern("<version>4\\.0\\.\\d+</version>")
+                    .actual())
+                ),
+                srcMainJava(
+                  //language=java
+                  java(
+                    """
+                      import org.springframework.web.reactive.function.client.WebClient;
+
+                      class A {
+                          private WebClient webClient;
+                      }
+                      """
+                  )
+                )
+              )
+            );
+        }
+
+        @Test
+        void addWebClientStarterIfWebClientCustomizerIsUsed() {
+            rewriteRun(
+              mavenProject("project",
+                //language=xml
+                pomXml(
+                  """
+                    <project>
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>org.example</groupId>
+                        <artifactId>example</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                        <dependencies>
+                        </dependencies>
+                    </project>
+                    """,
+                  spec -> spec.after(pom -> assertThat(pom)
+                    .contains("<artifactId>spring-boot-starter-webclient</artifactId>")
+                    .containsPattern("<version>4\\.0\\.\\d+</version>")
+                    .actual())
+                ),
+                srcMainJava(
+                  //language=java
+                  java(
+                    """
+                      import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
+
+                      class A {
+                          private WebClientCustomizer customizer;
+                      }
+                      """,
+                    """
+                      import org.springframework.boot.webclient.WebClientCustomizer;
+
+                      class A {
+                          private WebClientCustomizer customizer;
+                      }
+                      """
+                  )
+                )
+              )
+            );
+        }
+
+        @Test
+        void migrateWebClientAutoConfigurationPackage() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration;
+
+                  class A {
+                      Class<?> c = WebClientAutoConfiguration.class;
+                  }
+                  """,
+                """
+                  import org.springframework.boot.webclient.autoconfigure.WebClientAutoConfiguration;
+
+                  class A {
+                      Class<?> c = WebClientAutoConfiguration.class;
+                  }
+                  """
+              )
+            );
+        }
+
+        @Test
+        void addWebClientTestStarterIfAutoConfigureWebClientIsUsedForTest() {
+            rewriteRun(
+              mavenProject("project",
+                //language=xml
+                pomXml(
+                  """
+                    <project>
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>org.example</groupId>
+                        <artifactId>example</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                        <dependencies>
+                        </dependencies>
+                    </project>
+                    """,
+                  spec -> spec.after(pom -> assertThat(pom)
+                    .contains("<artifactId>spring-boot-starter-webclient-test</artifactId>")
+                    .contains("<scope>test</scope>")
+                    .containsPattern("<version>4\\.0\\.\\d+</version>")
+                    .actual())
+                ),
+                srcTestJava(
+                  //language=java
+                  java(
+                    """
+                      import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
+
+                      @AutoConfigureWebClient
+                      class A {
+                      }
+                      """,
+                    """
+                      import org.springframework.boot.webclient.test.autoconfigure.AutoConfigureWebClient;
+
+                      @AutoConfigureWebClient
+                      class A {
+                      }
+                      """
+                  )
+                )
+              )
+            );
+        }
+    }
+
     @Test
     void addRestTestClientTestDependencyIfTestRestTemplateIsUsedForTest() {
         rewriteRun(

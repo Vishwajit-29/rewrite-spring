@@ -144,6 +144,20 @@ recipeList:
       acceptTransitive: true
       version: 4.0.x
       onlyIfUsing: org.springframework.boot.web.client.*
+  # Spring's reactive `WebClient` now has a dedicated starter in Boot 4.0;
+  # previously it was pulled in transitively via `spring-boot-starter-webflux`.
+  - org.openrewrite.java.dependencies.AddDependency:
+      groupId: org.springframework.boot
+      artifactId: spring-boot-starter-webclient
+      acceptTransitive: true
+      version: 4.0.x
+      onlyIfUsing: org.springframework.web.reactive.function.client.*
+  - org.openrewrite.java.dependencies.AddDependency:
+      groupId: org.springframework.boot
+      artifactId: spring-boot-starter-webclient
+      acceptTransitive: true
+      version: 4.0.x
+      onlyIfUsing: org.springframework.boot.web.reactive.function.client.*
   - org.openrewrite.java.dependencies.AddDependency:
       groupId: org.springframework.boot
       artifactId: spring-boot-starter-restclient-test
@@ -151,6 +165,13 @@ recipeList:
       version: 4.0.x
       scope: test
       onlyIfUsing: org.springframework.boot.test.autoconfigure.web.client.*
+  - org.openrewrite.java.dependencies.AddDependency:
+      groupId: org.springframework.boot
+      artifactId: spring-boot-starter-webclient-test
+      acceptTransitive: true
+      version: 4.0.x
+      scope: test
+      onlyIfUsing: org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient
   - org.openrewrite.java.dependencies.AddDependency:
       groupId: org.springframework.boot
       artifactId: spring-boot-resttestclient
@@ -474,6 +495,20 @@ recipeList:
       oldPackageName: org.springframework.boot.autoconfigure.web.client
       newPackageName: org.springframework.boot.restclient.autoconfigure
       recursive: true
+  # spring-boot-webclient
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: org.springframework.boot.web.reactive.function.client
+      newPackageName: org.springframework.boot.webclient
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: org.springframework.boot.autoconfigure.web.reactive.function.client
+      newPackageName: org.springframework.boot.webclient.autoconfigure
+      recursive: true
+  # spring-boot-webclient-test: `AutoConfigureWebClient` moves to its own module,
+  # so it must be listed before the broad `restclient.test.autoconfigure` mapping below.
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient
+      newFullyQualifiedTypeName: org.springframework.boot.webclient.test.autoconfigure.AutoConfigureWebClient
   # spring-boot-restclient-test
   - org.openrewrite.java.ChangePackage:
       oldPackageName: org.springframework.boot.test.autoconfigure.web.client
