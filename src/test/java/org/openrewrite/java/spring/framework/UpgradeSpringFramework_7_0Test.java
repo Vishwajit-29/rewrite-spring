@@ -29,7 +29,8 @@ class UpgradeSpringFramework_7_0Test implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipeFromResources("org.openrewrite.java.spring.framework.UpgradeSpringFramework_7_0")
-          .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "spring-web-6.2"));
+          .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "spring-web-6.2",
+            "spring-test-6.+"));
     }
 
     @DocumentExample
@@ -53,6 +54,87 @@ class UpgradeSpringFramework_7_0Test implements RewriteTest {
               class A {
                   int status() {
                       return UNPROCESSABLE_CONTENT.value();
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void replacesPayloadTooLargeStaticImport() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import static org.springframework.http.HttpStatus.PAYLOAD_TOO_LARGE;
+
+              class A {
+                  int status() {
+                      return PAYLOAD_TOO_LARGE.value();
+                  }
+              }
+              """,
+            """
+              import static org.springframework.http.HttpStatus.CONTENT_TOO_LARGE;
+
+              class A {
+                  int status() {
+                      return CONTENT_TOO_LARGE.value();
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void replacesUnprocessableEntityMethodCall() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+              class A {
+                  void status() {
+                      MockMvcResultMatchers.status().isUnprocessableEntity();
+                  }
+              }
+              """,
+            """
+              import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+              class A {
+                  void status() {
+                      MockMvcResultMatchers.status().isUnprocessableContent();
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void replacesPayloadTooLargeMethodCall() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+              class A {
+                  void status() {
+                      MockMvcResultMatchers.status().isPayloadTooLarge();
+                  }
+              }
+              """,
+            """
+              import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+              class A {
+                  void status() {
+                      MockMvcResultMatchers.status().isContentTooLarge();
                   }
               }
               """
