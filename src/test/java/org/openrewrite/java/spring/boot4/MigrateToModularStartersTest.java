@@ -317,6 +317,7 @@ class MigrateToModularStartersTest implements RewriteTest {
                     """,
                   spec -> spec.after(pom -> assertThat(pom)
                     .contains("<artifactId>spring-boot-starter-webclient</artifactId>")
+                    .doesNotContain("<artifactId>spring-boot-starter-restclient</artifactId>")
                     .containsPattern("<version>4\\.0\\.\\d+</version>")
                     .actual())
                 ),
@@ -328,6 +329,43 @@ class MigrateToModularStartersTest implements RewriteTest {
 
                       class A {
                           private WebClient webClient;
+                      }
+                      """
+                  )
+                )
+              )
+            );
+        }
+
+        @Test
+        void doesNotAddWebClientStarterForRestClientUsage() {
+            rewriteRun(
+              mavenProject("project",
+                //language=xml
+                pomXml(
+                  """
+                    <project>
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>org.example</groupId>
+                        <artifactId>example</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                        <dependencies>
+                        </dependencies>
+                    </project>
+                    """,
+                  spec -> spec.after(pom -> assertThat(pom)
+                    .contains("<artifactId>spring-boot-starter-restclient</artifactId>")
+                    .doesNotContain("<artifactId>spring-boot-starter-webclient</artifactId>")
+                    .actual())
+                ),
+                srcMainJava(
+                  //language=java
+                  java(
+                    """
+                      import org.springframework.web.client.RestClient;
+
+                      class A {
+                          private RestClient restClient;
                       }
                       """
                   )
@@ -421,6 +459,7 @@ class MigrateToModularStartersTest implements RewriteTest {
                     """,
                   spec -> spec.after(pom -> assertThat(pom)
                     .contains("<artifactId>spring-boot-starter-webclient-test</artifactId>")
+                    .doesNotContain("<artifactId>spring-boot-starter-restclient-test</artifactId>")
                     .contains("<scope>test</scope>")
                     .containsPattern("<version>4\\.0\\.\\d+</version>")
                     .actual())
@@ -439,6 +478,96 @@ class MigrateToModularStartersTest implements RewriteTest {
                       import org.springframework.boot.webclient.test.autoconfigure.AutoConfigureWebClient;
 
                       @AutoConfigureWebClient
+                      class A {
+                      }
+                      """
+                  )
+                )
+              )
+            );
+        }
+
+        @Test
+        void addRestClientTestStarterIfRestClientTestIsUsedForTest() {
+            rewriteRun(
+              mavenProject("project",
+                //language=xml
+                pomXml(
+                  """
+                    <project>
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>org.example</groupId>
+                        <artifactId>example</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                        <dependencies>
+                        </dependencies>
+                    </project>
+                    """,
+                  spec -> spec.after(pom -> assertThat(pom)
+                    .contains("<artifactId>spring-boot-starter-restclient-test</artifactId>")
+                    .doesNotContain("<artifactId>spring-boot-starter-webclient-test</artifactId>")
+                    .contains("<scope>test</scope>")
+                    .containsPattern("<version>4\\.0\\.\\d+</version>")
+                    .actual())
+                ),
+                srcTestJava(
+                  //language=java
+                  java(
+                    """
+                      import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+
+                      @RestClientTest
+                      class A {
+                      }
+                      """,
+                    """
+                      import org.springframework.boot.restclient.test.autoconfigure.RestClientTest;
+
+                      @RestClientTest
+                      class A {
+                      }
+                      """
+                  )
+                )
+              )
+            );
+        }
+
+        @Test
+        void addRestClientTestStarterIfAutoConfigureMockRestServiceServerIsUsedForTest() {
+            rewriteRun(
+              mavenProject("project",
+                //language=xml
+                pomXml(
+                  """
+                    <project>
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>org.example</groupId>
+                        <artifactId>example</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                        <dependencies>
+                        </dependencies>
+                    </project>
+                    """,
+                  spec -> spec.after(pom -> assertThat(pom)
+                    .contains("<artifactId>spring-boot-starter-restclient-test</artifactId>")
+                    .doesNotContain("<artifactId>spring-boot-starter-webclient-test</artifactId>")
+                    .actual())
+                ),
+                srcTestJava(
+                  //language=java
+                  java(
+                    """
+                      import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureMockRestServiceServer;
+
+                      @AutoConfigureMockRestServiceServer
+                      class A {
+                      }
+                      """,
+                    """
+                      import org.springframework.boot.restclient.test.autoconfigure.AutoConfigureMockRestServiceServer;
+
+                      @AutoConfigureMockRestServiceServer
                       class A {
                       }
                       """

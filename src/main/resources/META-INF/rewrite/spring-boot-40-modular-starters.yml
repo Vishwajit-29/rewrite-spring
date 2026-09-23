@@ -158,13 +158,30 @@ recipeList:
       acceptTransitive: true
       version: 4.0.x
       onlyIfUsing: org.springframework.boot.web.reactive.function.client.*
+  # `restclient-test` is keyed on specific RestClient types rather than the whole
+  # `test.autoconfigure.web.client` package, since `AutoConfigureWebClient` in that
+  # package belongs to `webclient-test` (same reason `WebFluxTest` above is specific).
   - org.openrewrite.java.dependencies.AddDependency:
       groupId: org.springframework.boot
       artifactId: spring-boot-starter-restclient-test
       acceptTransitive: true
       version: 4.0.x
       scope: test
-      onlyIfUsing: org.springframework.boot.test.autoconfigure.web.client.*
+      onlyIfUsing: org.springframework.boot.test.autoconfigure.web.client.RestClientTest
+  - org.openrewrite.java.dependencies.AddDependency:
+      groupId: org.springframework.boot
+      artifactId: spring-boot-starter-restclient-test
+      acceptTransitive: true
+      version: 4.0.x
+      scope: test
+      onlyIfUsing: org.springframework.boot.test.autoconfigure.web.client.AutoConfigureMockRestServiceServer
+  - org.openrewrite.java.dependencies.AddDependency:
+      groupId: org.springframework.boot
+      artifactId: spring-boot-starter-restclient-test
+      acceptTransitive: true
+      version: 4.0.x
+      scope: test
+      onlyIfUsing: org.springframework.boot.test.autoconfigure.web.client.MockRestServiceServerAutoConfiguration
   - org.openrewrite.java.dependencies.AddDependency:
       groupId: org.springframework.boot
       artifactId: spring-boot-starter-webclient-test
