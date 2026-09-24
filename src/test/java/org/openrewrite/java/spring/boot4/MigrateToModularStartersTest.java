@@ -488,6 +488,54 @@ class MigrateToModularStartersTest implements RewriteTest {
         }
 
         @Test
+        void removesRegisterRestTemplateAttributeWhenMigratingAutoConfigureWebClient() {
+            // Boot 4 `org.springframework.boot.webclient.test.autoconfigure.AutoConfigureWebClient`
+            // has no `registerRestTemplate` attribute (RestTemplate/RestClient support moved to
+            // `AutoConfigureRestClient`). The attribute must be dropped so the renamed
+            // annotation still compiles.
+            rewriteRun(
+              mavenProject("project",
+                //language=xml
+                pomXml(
+                  """
+                    <project>
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>org.example</groupId>
+                        <artifactId>example</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                        <dependencies>
+                        </dependencies>
+                    </project>
+                    """,
+                  spec -> spec.after(pom -> assertThat(pom)
+                    .contains("<artifactId>spring-boot-starter-webclient-test</artifactId>")
+                    .contains("<scope>test</scope>")
+                    .actual())
+                ),
+                srcTestJava(
+                  //language=java
+                  java(
+                    """
+                      import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
+
+                      @AutoConfigureWebClient(registerRestTemplate = true)
+                      class A {
+                      }
+                      """,
+                    """
+                      import org.springframework.boot.webclient.test.autoconfigure.AutoConfigureWebClient;
+
+                      @AutoConfigureWebClient
+                      class A {
+                      }
+                      """
+                  )
+                )
+              )
+            );
+        }
+
+        @Test
         void addRestClientTestStarterIfRestClientTestIsUsedForTest() {
             rewriteRun(
               mavenProject("project",
